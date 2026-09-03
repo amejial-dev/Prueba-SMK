@@ -2,9 +2,10 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const sequelize = require('./config/database');
-// TODO: importar rutas propias cuando existan, ej:
-// const authRoutes = require('./routes/auth.routes');
+const { sequelize } = require('./models');
+const authRoutes = require('./routes/auth.routes');
+const errorMiddleware = require('./middlewares/error.middleware');
+// TODO: importar más rutas propias cuando existan, ej:
 // const documentRoutes = require('./routes/documents.routes');
 
 const app = express();
@@ -17,17 +18,19 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// TODO: montar rutas propias, ej:
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
+// TODO: montar más rutas propias, ej:
 // app.use('/api/documents', documentRoutes);
+
+app.use(errorMiddleware);
 
 async function start() {
   try {
     await sequelize.authenticate();
     console.log('Conexión a la base de datos establecida.');
 
-    // TODO: una vez definidos los modelos en src/models, sincronizarlos:
-    // await sequelize.sync();
+    await sequelize.sync();
+    console.log('Modelos sincronizados.');
 
     app.listen(PORT, () => {
       console.log(`Servidor escuchando en el puerto ${PORT}`);
