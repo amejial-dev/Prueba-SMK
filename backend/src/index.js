@@ -4,9 +4,8 @@ require('dotenv').config();
 
 const { sequelize } = require('./models');
 const authRoutes = require('./routes/auth.routes');
+const documentRoutes = require('./routes/document.routes');
 const errorMiddleware = require('./middlewares/error.middleware');
-// TODO: importar más rutas propias cuando existan, ej:
-// const documentRoutes = require('./routes/documents.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,8 +18,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-// TODO: montar más rutas propias, ej:
-// app.use('/api/documents', documentRoutes);
+app.use('/api/documents', documentRoutes);
 
 app.use(errorMiddleware);
 
