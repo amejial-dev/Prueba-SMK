@@ -1,0 +1,66 @@
+schema: spec-driven
+
+context: |
+  Prueba técnica Full Stack Developer (Node.js & Vue 3): gestor de documentos CSV
+  con autenticación y roles.
+
+  Tech stack (fijo, no cambiar sin aprobación explícita):
+  - Backend: Node.js + Express 5, ORM Sequelize, PostgreSQL (dialecto postgres, sin SQLite).
+  - Auth: JWT (jsonwebtoken), hashing con bcryptjs, validación con express-validator.
+  - Carga de archivos: multer (multipart/form-data), parseo CSV con csv-parse.
+  - Frontend: Vue 3 con Option API (no Composition API), Vue Router, Axios para HTTP.
+  - Estilo UI/UX obligatorio: glassmorphism (fondos translúcidos con backdrop-filter:
+    blur, bordes sutiles semi-transparentes, sombras suaves, gradientes de fondo),
+    interfaz dinámica y moderna.
+  - Infraestructura: todo corre vía docker-compose (servicios db, backend, frontend).
+    Dockerfiles ya existen en backend/ y frontend/.
+  - Estructura ya creada: backend/src/{config,controllers,middlewares,models,routes}/,
+    frontend/src/{views,components,router}/.
+
+  Reglas del dominio (del enunciado de la prueba):
+  - Registro: nombre, contraseña, confirmar contraseña, rol (user | admin).
+  - Login retorna JWT.
+  - CSV: columnas correo (email válido), nombre, telefono (numérico), ciudad
+    (obligatorio), notas (opcional). Errores de validación deben reportarse
+    detallados al frontend.
+  - RBAC: cualquier usuario autenticado sube/descarga; solo admin elimina.
+  - Dashboard: drag&drop de CSV, tabla con nombre de documento, usuario que
+    cargó, fecha de carga, número de registros, acciones descargar/eliminar
+    (eliminar solo visible/habilitado para admin).
+
+rules:
+  tasks:
+    - "Dividir tareas en bloques ejecutables por un agente programador en una sola sesión, sin dejar pasos ambiguos."
+  proposal:
+    - "Mencionar explícitamente qué archivos/carpetas existentes se van a tocar o crear."
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
