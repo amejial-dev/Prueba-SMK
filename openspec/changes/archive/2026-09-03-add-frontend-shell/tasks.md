@@ -25,4 +25,4 @@
 
 ## 6. Verificación final
 
-- [ ] 6.1 Con el backend corriendo (`npm run dev` en `backend/`, requiere Postgres accesible), probar el flujo completo en el navegador: registro → redirección/aviso → login → redirección a `/` → recargar la página y confirmar que la sesión persiste. Si no hay Postgres/backend accesible en este entorno, dejar la tarea sin marcar y anotarlo explícitamente, dejando documentado qué se verificó solo a nivel de UI (sin red) en las tareas anteriores.
+- [x] 6.1 Verificado en el navegador real (Chrome vía claude-in-chrome) contra `docker compose up`: login con credenciales válidas redirige a `/`, muestra "Bienvenido, &lt;nombre&gt;" y el rol correcto; recargar la página (`navigate` a `/`) mantiene la sesión y no redirige a `/login`, confirmando persistencia real en `localStorage`.

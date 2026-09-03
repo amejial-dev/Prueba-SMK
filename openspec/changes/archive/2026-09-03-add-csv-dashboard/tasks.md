@@ -14,4 +14,4 @@
 
 ## 4. Verificación final
 
-- [ ] 4.1 Con el backend corriendo (`npm run dev` en `backend/`, requiere Postgres accesible) y el frontend corriendo (`npm run dev` en `frontend/`), probar el flujo completo en el navegador: login → subir un CSV válido → verlo aparecer en la tabla con los datos correctos → descargarlo → (con un usuario admin) eliminarlo y confirmar que desaparece de la tabla → (con un usuario `user`) confirmar que el botón eliminar no aparece. Si no hay Postgres/backend accesible en este entorno, dejar la tarea sin marcar y anotarlo explícitamente, documentando qué se verificó solo a nivel de UI (sin red) en las tareas anteriores.
+- [x] 4.1 Verificado en el navegador real (Chrome vía claude-in-chrome) contra `docker compose up`: login como admin → subir CSV válido → aparece en la tabla con nombre/usuario/fecha/registros correctos → subir CSV inválido → error detallado por fila sin tocar la tabla → descargar (archivo real guardado en Downloads) → eliminar → desaparece de la tabla. Logout y login como `user_test` → subir CSV → tabla muestra únicamente el botón "Descargar", sin "Eliminar" (RBAC visual confirmado).
