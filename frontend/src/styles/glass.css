@@ -1,0 +1,128 @@
+/* Sistema de diseño glassmorphism global (ver openspec/changes/add-frontend-shell/design.md) */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-blur: 16px;
+  --glass-radius: 18px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+  --text-color: rgba(255, 255, 255, 0.92);
+  --text-color-muted: rgba(255, 255, 255, 0.65);
+  --error-color: #ff8a8a;
+  --success-color: #7fe6b8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text-color);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-shadow);
+}
+
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-color);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-shadow);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.btn-glass:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.btn-glass:active {
+  transform: translateY(0);
+}
+
+.btn-glass:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.btn-glass:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.input-glass {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-glass::placeholder {
+  color: var(--text-color-muted);
+}
+
+.input-glass:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.input-glass:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
