@@ -35,6 +35,14 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario.
    - Frontend: http://localhost:5173
    - PostgreSQL: localhost:5432
 
+3. Crear el usuario administrador (el registro público solo crea usuarios con `rol: 'user'`; `admin` se asigna con este seeder):
+
+   ```
+   ADMIN_SEED_NOMBRE=admin ADMIN_SEED_PASSWORD=algo-seguro docker compose exec backend npm run seed:admin
+   ```
+
+   Si el usuario `ADMIN_SEED_NOMBRE` ya existe, el seeder lo promueve a `admin`; si no existe, lo crea. Se puede ejecutar varias veces sin error.
+
 ## Desarrollo local sin Docker (opcional)
 
 ```
@@ -46,7 +54,7 @@ cd frontend && npm run dev
 
 ## Estado
 
-- [ ] Registro de usuarios (nombre, contraseña, confirmar contraseña, rol)
+- [ ] Registro de usuarios (nombre, contraseña, confirmar contraseña; rol siempre "user", admin vía seeder `npm run seed:admin`)
 - [ ] Login con JWT
 - [ ] Modelo de documentos CSV
 - [ ] Endpoint de carga y validación de CSV

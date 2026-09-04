@@ -18,7 +18,9 @@ context: |
     frontend/src/{views,components,router}/.
 
   Reglas del dominio (del enunciado de la prueba):
-  - Registro: nombre, contraseña, confirmar contraseña, rol (user | admin).
+  - Registro: nombre, contraseña, confirmar contraseña (el registro público no
+    acepta ni asigna rol; siempre crea `rol: 'user'`). El rol `admin` se asigna
+    únicamente vía DB directa o el seeder `npm run seed:admin`.
   - Login retorna JWT.
   - CSV: columnas correo (email válido), nombre, telefono (numérico), ciudad
     (obligatorio), notas (opcional). Errores de validación deben reportarse

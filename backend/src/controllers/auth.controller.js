@@ -6,7 +6,7 @@ const SALT_ROUNDS = 10;
 
 async function register(req, res, next) {
   try {
-    const { nombre, contraseña, confirmarContraseña, rol } = req.body;
+    const { nombre, contraseña, confirmarContraseña } = req.body;
 
     if (contraseña !== confirmarContraseña) {
       const err = new Error('Las contraseñas no coinciden.');
@@ -25,7 +25,7 @@ async function register(req, res, next) {
 
     const passwordHash = await bcrypt.hash(contraseña, SALT_ROUNDS);
 
-    const user = await User.create({ nombre, passwordHash, rol });
+    const user = await User.create({ nombre, passwordHash, rol: 'user' });
 
     return res.status(201).json({
       id: user.id,

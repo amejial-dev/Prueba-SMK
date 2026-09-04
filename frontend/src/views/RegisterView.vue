@@ -10,7 +10,6 @@ export default {
       nombre: '',
       password: '',
       confirmPassword: '',
-      rol: 'user',
       errorMessage: '',
       successMessage: '',
       loading: false,
@@ -32,13 +31,11 @@ export default {
           nombre: this.nombre,
           contraseña: this.password,
           confirmarContraseña: this.confirmPassword,
-          rol: this.rol,
         })
         this.successMessage = 'Registro exitoso. Ya puedes iniciar sesión.'
         this.nombre = ''
         this.password = ''
         this.confirmPassword = ''
-        this.rol = 'user'
       } catch (err) {
         this.errorMessage =
           (err.response && err.response.data && err.response.data.error && err.response.data.error.message) ||
@@ -90,14 +87,6 @@ export default {
             required
           />
         </div>
-        <div class="field">
-          <label for="rol">Rol</label>
-          <select id="rol" v-model="rol" class="input-glass">
-            <option value="user">Usuario</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </div>
-
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
         <button type="submit" class="btn-glass" :disabled="loading">
@@ -148,10 +137,6 @@ h1 {
 label {
   font-size: 0.9rem;
   color: var(--text-color-muted);
-}
-
-select.input-glass {
-  appearance: none;
 }
 
 .error-message {
