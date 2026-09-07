@@ -2,6 +2,8 @@
 
 Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier usuario autenticado puede subir, listar y descargar CSV de contactos; solo los administradores pueden eliminarlos.
 
+> El enunciado original de la prueba técnica está en [`docs/Prueba-Tecnica-Full-Stack-Developer.pdf`](docs/Prueba-Tecnica-Full-Stack-Developer.pdf).
+
 ## Stack
 
 - **Backend**: Node.js + Express 5 + Sequelize (ORM) + PostgreSQL 16
@@ -57,6 +59,8 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
    ADMIN_SEED_NOMBRE=admin ADMIN_SEED_PASSWORD=algo-seguro docker compose exec backend npm run seed:admin
    ```
 
+   Alternativamente, se pueden fijar `ADMIN_SEED_NOMBRE` y `ADMIN_SEED_PASSWORD` en `backend/.env` (ver `.env.example`) y correr solo `docker compose exec backend npm run seed:admin`.
+
    Si el usuario `ADMIN_SEED_NOMBRE` ya existe, el seeder lo promueve a `admin`; si no existe, lo crea. Se puede ejecutar varias veces sin error.
 
 ## Variables de entorno (`backend/.env`)
@@ -67,6 +71,8 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
 | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | Conexión a PostgreSQL | ver `.env.example` |
 | `JWT_SECRET` | Secreto para firmar/verificar los JWT | cambiar en producción |
 | `JWT_EXPIRES_IN` | Tiempo de expiración del token | `1d` (1 día) |
+| `ADMIN_SEED_NOMBRE` | Nombre del usuario a crear/promover a `admin` | usado solo por `npm run seed:admin`, ver `.env.example` |
+| `ADMIN_SEED_PASSWORD` | Contraseña del usuario admin sembrado | usado solo por `npm run seed:admin`, ver `.env.example` |
 
 ## Roles y permisos (RBAC)
 
