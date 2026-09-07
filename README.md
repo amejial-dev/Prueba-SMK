@@ -2,8 +2,6 @@
 
 Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier usuario autenticado puede subir, listar y descargar CSV de contactos; solo los administradores pueden eliminarlos.
 
-> El enunciado original de la prueba técnica está en [`docs/Prueba-Tecnica-Full-Stack-Developer.pdf`](docs/Prueba-Tecnica-Full-Stack-Developer.pdf).
-
 ## Stack
 
 - **Backend**: Node.js + Express 5 + Sequelize (ORM) + PostgreSQL 16
