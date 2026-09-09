@@ -10,23 +10,23 @@ Document.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    nombreOriginal: {
+    originalName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    nombreArchivo: {
+    fileName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    rutaArchivo: {
+    filePath: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    numeroRegistros: {
+    recordCount: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    usuarioId: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -36,6 +36,7 @@ Document.init(
     modelName: 'Document',
     tableName: 'documents',
     timestamps: true,
+    paranoid: true,
   }
 );
 

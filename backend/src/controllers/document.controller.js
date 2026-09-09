@@ -1,10 +1,10 @@
 const fs = require('fs');
 const { parse } = require('csv-parse/sync');
 const { sequelize, Document, DocumentRow, User } = require('../models');
-const { validarFilas } = require('../utils/csvValidator');
+const { validateRows } = require('../utils/csvValidator');
 
-function eliminarArchivoSiExiste(rutaArchivo) {
-  fs.unlink(rutaArchivo, (unlinkErr) => {
+function deleteFileIfExists(filePath) {
+  fs.unlink(filePath, (unlinkErr) => {
     if (unlinkErr) {
       console.error('No se pudo borrar el archivo temporal:', unlinkErr);
     }
@@ -19,65 +19,65 @@ async function upload(req, res, next) {
       return next(err);
     }
 
-    const rutaArchivo = req.file.path;
-    let registros;
+    const filePath = req.file.path;
+    let records;
 
     try {
-      const contenido = fs.readFileSync(rutaArchivo);
-      registros = parse(contenido, {
+      const fileContent = fs.readFileSync(filePath);
+      records = parse(fileContent, {
         columns: true,
         skip_empty_lines: true,
         trim: true,
       });
     } catch (parseError) {
-      eliminarArchivoSiExiste(rutaArchivo);
+      deleteFileIfExists(filePath);
       const err = new Error('No se pudo parsear el archivo CSV. Verifique el formato.');
       err.statusCode = 400;
       return next(err);
     }
 
-    const { validas, errores } = validarFilas(registros);
+    const { validRows, errors } = validateRows(records);
 
-    if (errores.length > 0) {
-      eliminarArchivoSiExiste(rutaArchivo);
+    if (errors.length > 0) {
+      deleteFileIfExists(filePath);
       const err = new Error('El archivo CSV contiene filas inválidas.');
       err.statusCode = 400;
-      err.details = errores;
+      err.details = errors;
       return next(err);
     }
 
-    const documento = await sequelize.transaction(async (t) => {
-      const nuevoDocumento = await Document.create(
+    const document = await sequelize.transaction(async (t) => {
+      const newDocument = await Document.create(
         {
-          nombreOriginal: req.file.originalname,
-          nombreArchivo: req.file.filename,
-          rutaArchivo: rutaArchivo,
-          numeroRegistros: validas.length,
-          usuarioId: req.user.id,
+          originalName: req.file.originalname,
+          fileName: req.file.filename,
+          filePath: filePath,
+          recordCount: validRows.length,
+          userId: req.user.id,
         },
         { transaction: t }
       );
 
-      const filasParaCrear = validas.map((fila) => ({
-        ...fila,
-        documentId: nuevoDocumento.id,
+      const rowsToCreate = validRows.map((row) => ({
+        ...row,
+        documentId: newDocument.id,
       }));
 
-      await DocumentRow.bulkCreate(filasParaCrear, { transaction: t });
+      await DocumentRow.bulkCreate(rowsToCreate, { transaction: t });
 
-      return nuevoDocumento;
+      return newDocument;
     });
 
     return res.status(201).json({
-      id: documento.id,
-      nombreOriginal: documento.nombreOriginal,
-      numeroRegistros: documento.numeroRegistros,
-      usuarioId: documento.usuarioId,
-      createdAt: documento.createdAt,
+      id: document.id,
+      originalName: document.originalName,
+      recordCount: document.recordCount,
+      userId: document.userId,
+      createdAt: document.createdAt,
     });
   } catch (error) {
     if (req.file && req.file.path) {
-      eliminarArchivoSiExiste(req.file.path);
+      deleteFileIfExists(req.file.path);
     }
     return next(error);
   }
@@ -85,18 +85,18 @@ async function upload(req, res, next) {
 
 async function list(req, res, next) {
   try {
-    const documentos = await Document.findAll({
+    const documents = await Document.findAll({
       include: [{ model: User, attributes: ['id', 'nombre'] }],
       order: [['createdAt', 'DESC']],
     });
 
     return res.status(200).json(
-      documentos.map((doc) => ({
+      documents.map((doc) => ({
         id: doc.id,
-        nombreOriginal: doc.nombreOriginal,
-        usuario: doc.User ? { id: doc.User.id, nombre: doc.User.nombre } : null,
-        fechaCarga: doc.createdAt,
-        numeroRegistros: doc.numeroRegistros,
+        originalName: doc.originalName,
+        user: doc.User ? { id: doc.User.id, nombre: doc.User.nombre } : null,
+        uploadedAt: doc.createdAt,
+        recordCount: doc.recordCount,
       }))
     );
   } catch (error) {
@@ -107,15 +107,15 @@ async function list(req, res, next) {
 async function download(req, res, next) {
   try {
     const { id } = req.params;
-    const documento = await Document.findByPk(id);
+    const document = await Document.findByPk(id);
 
-    if (!documento) {
+    if (!document) {
       const err = new Error('El documento solicitado no existe.');
       err.statusCode = 404;
       return next(err);
     }
 
-    return res.download(documento.rutaArchivo, documento.nombreOriginal, (downloadErr) => {
+    return res.download(document.filePath, document.originalName, (downloadErr) => {
       if (downloadErr && !res.headersSent) {
         return next(downloadErr);
       }
@@ -128,19 +128,15 @@ async function download(req, res, next) {
 async function remove(req, res, next) {
   try {
     const { id } = req.params;
-    const documento = await Document.findByPk(id);
+    const document = await Document.findByPk(id);
 
-    if (!documento) {
+    if (!document) {
       const err = new Error('El documento solicitado no existe.');
       err.statusCode = 404;
       return next(err);
     }
 
-    const rutaArchivo = documento.rutaArchivo;
-
-    await documento.destroy();
-
-    eliminarArchivoSiExiste(rutaArchivo);
+    await document.destroy();
 
     return res.status(200).json({ message: 'Documento eliminado correctamente.' });
   } catch (error) {
