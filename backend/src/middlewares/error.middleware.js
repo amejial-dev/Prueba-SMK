@@ -1,8 +1,20 @@
 /* eslint-disable no-unused-vars */
 
+const multer = require('multer');
+
 function errorMiddleware(err, req, res, next) {
   if (res.headersSent) {
     return next(err);
+  }
+
+  // Errores de multer (tamaño excedido, etc.) al procesar el archivo subido.
+  if (err instanceof multer.MulterError) {
+    const maxMb = process.env.MAX_CSV_FILE_SIZE_MB || 5;
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? `El archivo supera el tamaño máximo permitido (${maxMb} MB).`
+        : `Error al procesar el archivo subido: ${err.message}`;
+    return res.status(400).json({ error: { message } });
   }
 
   // Errores de validación de express-validator, lanzados manualmente
