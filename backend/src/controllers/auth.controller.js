@@ -15,8 +15,8 @@ async function register(req, res, next) {
       return next(err);
     }
 
-    const existente = await User.findOne({ where: { nombre } });
-    if (existente) {
+    const existingUser = await User.findOne({ where: { nombre } });
+    if (existingUser) {
       const err = new Error('El nombre de usuario ya está registrado.');
       err.statusCode = 409;
       err.details = [{ field: 'nombre', message: 'Ya existe un usuario con ese nombre.' }];
@@ -48,8 +48,8 @@ async function login(req, res, next) {
       return next(err);
     }
 
-    const passwordValida = await bcrypt.compare(contraseña, user.passwordHash);
-    if (!passwordValida) {
+    const isPasswordValid = await bcrypt.compare(contraseña, user.passwordHash);
+    if (!isPasswordValid) {
       const err = new Error('Credenciales inválidas.');
       err.statusCode = 401;
       return next(err);

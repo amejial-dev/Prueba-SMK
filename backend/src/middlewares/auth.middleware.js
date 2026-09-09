@@ -22,9 +22,9 @@ function authenticate(req, res, next) {
   }
 }
 
-function authorize(rolesPermitidos) {
+function authorize(allowedRoles) {
   return function (req, res, next) {
-    if (!req.user || !rolesPermitidos.includes(req.user.rol)) {
+    if (!req.user || !allowedRoles.includes(req.user.rol)) {
       return res.status(403).json({
         error: { message: 'No tiene permisos para acceder a este recurso.' },
       });
