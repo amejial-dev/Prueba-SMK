@@ -25,32 +25,32 @@ export default {
     handleDrop(event) {
       this.dragging = false
       if (this.loading) return
-      const archivo = event.dataTransfer.files && event.dataTransfer.files[0]
-      if (archivo) {
-        this.uploadFile(archivo)
+      const file = event.dataTransfer.files && event.dataTransfer.files[0]
+      if (file) {
+        this.uploadFile(file)
       }
     },
     handleFileChange(event) {
-      const archivo = event.target.files && event.target.files[0]
-      if (archivo) {
-        this.uploadFile(archivo)
+      const file = event.target.files && event.target.files[0]
+      if (file) {
+        this.uploadFile(file)
       }
       // Permite volver a seleccionar el mismo archivo dos veces seguidas.
       event.target.value = ''
     },
-    async uploadFile(archivo) {
+    async uploadFile(file) {
       this.loading = true
       const formData = new FormData()
-      formData.append('file', archivo)
+      formData.append('file', file)
 
       try {
         const { data } = await api.post('/documents', formData)
         this.$emit('uploaded', data)
       } catch (err) {
-        const detalle =
+        const errorDetail =
           (err.response && err.response.data && err.response.data.error) ||
           { message: 'No se pudo subir el archivo. Intenta más tarde.' }
-        this.$emit('upload-error', detalle)
+        this.$emit('upload-error', errorDetail)
       } finally {
         this.loading = false
       }

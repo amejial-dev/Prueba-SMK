@@ -11,8 +11,8 @@ export default {
   data() {
     return {
       session,
-      documentos: [],
-      errorCarga: null,
+      documents: [],
+      uploadError: null,
       successMessage: '',
     }
   },
@@ -32,24 +32,24 @@ export default {
     async fetchDocuments() {
       try {
         const { data } = await api.get('/documents')
-        this.documentos = data
+        this.documents = data
       } catch {
         // El interceptor de api.js ya maneja el 401 global; para otros errores
         // dejamos la tabla como estaba y no bloqueamos la vista.
       }
     },
     handleUploaded() {
-      this.errorCarga = null
+      this.uploadError = null
       this.successMessage = 'Documento cargado correctamente.'
       this.fetchDocuments()
     },
-    handleUploadError(detalle) {
+    handleUploadError(errorDetail) {
       this.successMessage = ''
-      this.errorCarga = detalle
+      this.uploadError = errorDetail
     },
     async handleDownload(id) {
-      const documento = this.documentos.find((doc) => doc.id === id)
-      const nombreDescarga = documento ? documento.nombreOriginal : 'documento.csv'
+      const targetDocument = this.documents.find((doc) => doc.id === id)
+      const downloadFileName = targetDocument ? targetDocument.originalName : 'documento.csv'
 
       try {
         const response = await api.get(`/documents/${id}/download`, {
@@ -58,21 +58,21 @@ export default {
         const url = URL.createObjectURL(response.data)
         const link = document.createElement('a')
         link.href = url
-        link.download = nombreDescarga
+        link.download = downloadFileName
         document.body.appendChild(link)
         link.click()
         link.remove()
         URL.revokeObjectURL(url)
       } catch {
-        this.errorCarga = { message: 'No se pudo descargar el documento.' }
+        this.uploadError = { message: 'No se pudo descargar el documento.' }
       }
     },
     async handleDelete(id) {
       try {
         await api.delete(`/documents/${id}`)
-        this.documentos = this.documentos.filter((doc) => doc.id !== id)
+        this.documents = this.documents.filter((doc) => doc.id !== id)
       } catch {
-        this.errorCarga = { message: 'No se pudo eliminar el documento.' }
+        this.uploadError = { message: 'No se pudo eliminar el documento.' }
       }
     },
   },
@@ -95,10 +95,10 @@ export default {
 
       <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
 
-      <div v-if="errorCarga" class="error-message">
-        <p>{{ errorCarga.message }}</p>
-        <ul v-if="errorCarga.details && errorCarga.details.length" class="error-details">
-          <li v-for="(detalle, index) in errorCarga.details" :key="index">
+      <div v-if="uploadError" class="error-message">
+        <p>{{ uploadError.message }}</p>
+        <ul v-if="uploadError.details && uploadError.details.length" class="error-details">
+          <li v-for="(detalle, index) in uploadError.details" :key="index">
             fila {{ detalle.fila }}: {{ detalle.campo }} — {{ detalle.mensaje }}
           </li>
         </ul>
@@ -108,7 +108,7 @@ export default {
     <GlassCard class="section-card">
       <h2>Documentos cargados</h2>
       <DocumentsTable
-        :documentos="documentos"
+        :documents="documents"
         :role="role"
         @download="handleDownload"
         @delete="handleDelete"
@@ -155,12 +155,6 @@ export default {
 
 .success-message {
   color: var(--success-color);
-  font-size: 0.9rem;
-  margin: 1rem 0 0;
-}
-
-.error-message {
-  color: var(--error-color);
   font-size: 0.9rem;
   margin: 1rem 0 0;
 }

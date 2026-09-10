@@ -10,6 +10,7 @@ export default {
       nombre: '',
       password: '',
       confirmPassword: '',
+      role: 'user',
       errorMessage: '',
       successMessage: '',
       loading: false,
@@ -31,11 +32,13 @@ export default {
           nombre: this.nombre,
           contraseña: this.password,
           confirmarContraseña: this.confirmPassword,
+          rol: this.role,
         })
         this.successMessage = 'Registro exitoso. Ya puedes iniciar sesión.'
         this.nombre = ''
         this.password = ''
         this.confirmPassword = ''
+        this.role = 'user'
       } catch (err) {
         this.errorMessage =
           (err.response && err.response.data && err.response.data.error && err.response.data.error.message) ||
@@ -86,6 +89,14 @@ export default {
             autocomplete="new-password"
             required
           />
+        </div>
+        <div class="field">
+          <label for="role">Rol</label>
+          <select id="role" v-model="role" class="input-glass">
+            <option value="user">Usuario</option>
+            <option value="admin" disabled>Administrador</option>
+          </select>
+          <p class="role-hint">El rol de administrador se asigna únicamente por el equipo del sistema.</p>
         </div>
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
@@ -139,10 +150,10 @@ label {
   color: var(--text-color-muted);
 }
 
-.error-message {
-  color: var(--error-color);
-  font-size: 0.9rem;
-  margin: -0.5rem 0 1rem;
+.role-hint {
+  font-size: 0.8rem;
+  color: var(--text-color-muted);
+  margin: 0.25rem 0 0;
 }
 
 .success-message {

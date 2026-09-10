@@ -2,7 +2,7 @@
 export default {
   name: 'DocumentsTable',
   props: {
-    documentos: {
+    documents: {
       type: Array,
       required: true,
     },
@@ -13,14 +13,14 @@ export default {
   },
   emits: ['download', 'delete'],
   methods: {
-    formatFecha(fecha) {
+    formatDate(fecha) {
       if (!fecha) return ''
       const date = new Date(fecha)
       if (Number.isNaN(date.getTime())) return fecha
       return date.toLocaleString()
     },
-    nombreUsuario(documento) {
-      return documento.usuario && documento.usuario.nombre ? documento.usuario.nombre : '—'
+    getUserName(document) {
+      return document.user && document.user.nombre ? document.user.nombre : '—'
     },
   },
 }
@@ -28,7 +28,7 @@ export default {
 
 <template>
   <div class="glass documents-table-wrapper">
-    <div v-if="documentos.length === 0" class="empty-state">
+    <div v-if="documents.length === 0" class="empty-state">
       <p>Todavía no hay documentos cargados.</p>
     </div>
 
@@ -43,20 +43,20 @@ export default {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="documento in documentos" :key="documento.id">
-          <td>{{ documento.nombreOriginal }}</td>
-          <td>{{ nombreUsuario(documento) }}</td>
-          <td>{{ formatFecha(documento.fechaCarga) }}</td>
-          <td>{{ documento.numeroRegistros }}</td>
+        <tr v-for="document in documents" :key="document.id">
+          <td>{{ document.originalName }}</td>
+          <td>{{ getUserName(document) }}</td>
+          <td>{{ formatDate(document.uploadedAt) }}</td>
+          <td>{{ document.recordCount }}</td>
           <td class="actions-cell">
-            <button type="button" class="btn-glass btn-small" @click="$emit('download', documento.id)">
+            <button type="button" class="btn-glass btn-small" @click="$emit('download', document.id)">
               Descargar
             </button>
             <button
               v-if="role === 'admin'"
               type="button"
               class="btn-glass btn-small btn-danger"
-              @click="$emit('delete', documento.id)"
+              @click="$emit('delete', document.id)"
             >
               Eliminar
             </button>

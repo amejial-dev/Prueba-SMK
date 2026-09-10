@@ -2,6 +2,8 @@ import axios from 'axios'
 import router from '../router'
 import { session, clearSession } from './session'
 
+// El fallback es solo para desarrollo local sin Docker; en docker-compose.yml
+// el servicio `frontend` inyecta VITE_API_URL vía `frontend/.env`.
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const api = axios.create({

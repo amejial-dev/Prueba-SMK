@@ -51,7 +51,7 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
    - Backend / API: http://localhost:3000/api
    - PostgreSQL: localhost:5432
 
-3. Crear el usuario administrador (el registro público solo crea usuarios con `rol: 'user'`; `admin` se asigna con este seeder, nunca desde el formulario de registro):
+3. Crear el usuario administrador (el registro público solo crea usuarios con `rol: 'user'` — el formulario muestra un selector de rol, pero la opción "Administrador" está deshabilitada y el backend rechaza con 400 cualquier `rol` distinto de `user`; `admin` se asigna únicamente con este seeder):
 
    ```
    ADMIN_SEED_NOMBRE=admin ADMIN_SEED_PASSWORD=algo-seguro docker compose exec backend npm run seed:admin
@@ -66,9 +66,11 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
 | `PORT` | Puerto del servidor Express | `3000` |
-| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | Conexión a PostgreSQL | ver `.env.example` |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | Conexión a PostgreSQL (las lee Sequelize) | ver `.env.example` |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | Credenciales que lee el contenedor oficial de Postgres (`env_file` del servicio `db`) — deben coincidir con `DB_NAME`/`DB_USER`/`DB_PASSWORD` | ver `.env.example` |
 | `JWT_SECRET` | Secreto para firmar/verificar los JWT | cambiar en producción |
 | `JWT_EXPIRES_IN` | Tiempo de expiración del token | `1d` (1 día) |
+| `MAX_CSV_FILE_SIZE_MB` | Tamaño máximo permitido para el CSV subido | `5` |
 | `ADMIN_SEED_NOMBRE` | Nombre del usuario a crear/promover a `admin` | usado solo por `npm run seed:admin`, ver `.env.example` |
 | `ADMIN_SEED_PASSWORD` | Contraseña del usuario admin sembrado | usado solo por `npm run seed:admin`, ver `.env.example` |
 
@@ -80,18 +82,20 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
 | Subir un CSV | ✔ | ✔ |
 | Ver el listado de documentos | ✔ | ✔ |
 | Descargar un documento | ✔ | ✔ |
-| Eliminar un documento | ✘ (403) | ✔ |
+| Eliminar un documento | ✘ (403) | ✔ (borrado lógico) |
+
+Eliminar un documento es un **borrado lógico** (soft delete): la fila queda marcada como eliminada (`deletedAt`) y desaparece del listado, pero el archivo original permanece en `backend/uploads/` y las filas parseadas del CSV (`document_rows`) no se borran.
 
 ## API principal
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | — | Crea un usuario (`nombre`, `contraseña`, `confirmarContraseña`); siempre `rol: 'user'` |
+| `POST` | `/api/auth/register` | — | Crea un usuario (`nombre`, `contraseña`, `confirmarContraseña`); siempre `rol: 'user'` — un `rol` distinto de `user` en el body responde **400** |
 | `POST` | `/api/auth/login` | — | Devuelve un JWT + datos del usuario |
-| `POST` | `/api/documents` | JWT | Sube y valida un CSV (campo multipart `file`) |
-| `GET` | `/api/documents` | JWT | Lista todos los documentos cargados |
+| `POST` | `/api/documents` | JWT | Sube y valida un CSV (campo multipart `file`, máx. `MAX_CSV_FILE_SIZE_MB`) |
+| `GET` | `/api/documents` | JWT | Lista los documentos no eliminados: `{ id, originalName, user, uploadedAt, recordCount }` |
 | `GET` | `/api/documents/:id/download` | JWT | Descarga el archivo original |
-| `DELETE` | `/api/documents/:id` | JWT + `admin` | Elimina un documento (y sus filas, en cascada) |
+| `DELETE` | `/api/documents/:id` | JWT + `admin` | Marca el documento como eliminado (borrado lógico); el archivo físico y las filas de `document_rows` se conservan |
 
 ## Desarrollo local sin Docker (opcional)
 

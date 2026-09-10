@@ -112,12 +112,6 @@ label {
   color: var(--text-color-muted);
 }
 
-.error-message {
-  color: var(--error-color);
-  font-size: 0.9rem;
-  margin: -0.5rem 0 1rem;
-}
-
 button[type='submit'] {
   width: 100%;
 }

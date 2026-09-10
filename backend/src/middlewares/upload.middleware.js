@@ -8,8 +8,9 @@ const storage = multer.diskStorage({
     cb(null, UPLOAD_DIR);
   },
   filename: function (req, file, cb) {
-    const nombreUnico = `${Date.now()}-${file.originalname}`;
-    cb(null, nombreUnico);
+    const safeOriginalName = path.basename(file.originalname).replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const uniqueName = `${Date.now()}-${safeOriginalName}`;
+    cb(null, uniqueName);
   },
 });
 
@@ -37,6 +38,9 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
+  limits: {
+    fileSize: Number(process.env.MAX_CSV_FILE_SIZE_MB || 5) * 1024 * 1024,
+  },
 });
 
 module.exports = upload;
