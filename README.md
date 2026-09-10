@@ -94,8 +94,8 @@ Eliminar un documento es un **borrado lógico** (soft delete): la fila queda mar
 | `POST` | `/api/auth/login` | — | Devuelve un JWT + datos del usuario |
 | `POST` | `/api/documents` | JWT | Sube y valida un CSV (campo multipart `file`, máx. `MAX_CSV_FILE_SIZE_MB`) |
 | `GET` | `/api/documents` | JWT | Lista los documentos no eliminados: `{ id, originalName, user, uploadedAt, recordCount }` |
-| `GET` | `/api/documents/:id/download` | JWT | Descarga el archivo original |
-| `DELETE` | `/api/documents/:id` | JWT + `admin` | Marca el documento como eliminado (borrado lógico); el archivo físico y las filas de `document_rows` se conservan |
+| `GET` | `/api/documents/:id/download` | JWT | Descarga el archivo original (`:id` debe ser numérico, si no responde **400**) |
+| `DELETE` | `/api/documents/:id` | JWT + `admin` | Marca el documento como eliminado (borrado lógico); el archivo físico y las filas de `document_rows` se conservan (`:id` debe ser numérico, si no responde **400**) |
 
 ## Desarrollo local sin Docker (opcional)
 
