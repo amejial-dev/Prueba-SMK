@@ -127,6 +127,13 @@ body {
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* El popup nativo de <select> no respeta backdrop-filter/transparencia:
+   se fuerza texto oscuro sobre fondo claro para que no se camufle. */
+select.input-glass option {
+  color: #1a1a1a;
+  background: #ffffff;
+}
+
 .error-message {
   color: var(--error-color);
   font-size: 0.9rem;

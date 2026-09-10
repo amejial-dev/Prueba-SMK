@@ -51,7 +51,7 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
    - Backend / API: http://localhost:3000/api
    - PostgreSQL: localhost:5432
 
-3. Crear el usuario administrador (el registro público solo crea usuarios con `rol: 'user'` — el formulario muestra un selector de rol, pero la opción "Administrador" está deshabilitada y el backend rechaza con 400 cualquier `rol` distinto de `user`; `admin` se asigna únicamente con este seeder):
+3. Crear el usuario administrador: el formulario de registro incluye un selector de rol (`Usuario` / `Administrador`) y el usuario creado queda con el rol elegido. También se puede crear/promover un admin por línea de comandos con el seeder:
 
    ```
    ADMIN_SEED_NOMBRE=admin ADMIN_SEED_PASSWORD=algo-seguro docker compose exec backend npm run seed:admin
@@ -90,12 +90,12 @@ Eliminar un documento es un **borrado lógico** (soft delete): la fila queda mar
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | — | Crea un usuario (`nombre`, `contraseña`, `confirmarContraseña`); siempre `rol: 'user'` — un `rol` distinto de `user` en el body responde **400** |
+| `POST` | `/api/auth/register` | — | Crea un usuario (`nombre`, `contraseña`, `confirmarContraseña`, `rol` opcional: `user` o `admin`, por defecto `user`) |
 | `POST` | `/api/auth/login` | — | Devuelve un JWT + datos del usuario |
 | `POST` | `/api/documents` | JWT | Sube y valida un CSV (campo multipart `file`, máx. `MAX_CSV_FILE_SIZE_MB`) |
 | `GET` | `/api/documents` | JWT | Lista los documentos no eliminados: `{ id, originalName, user, uploadedAt, recordCount }` |
-| `GET` | `/api/documents/:id/download` | JWT | Descarga el archivo original |
-| `DELETE` | `/api/documents/:id` | JWT + `admin` | Marca el documento como eliminado (borrado lógico); el archivo físico y las filas de `document_rows` se conservan |
+| `GET` | `/api/documents/:id/download` | JWT | Descarga el archivo original (`:id` debe ser numérico, si no responde **400**) |
+| `DELETE` | `/api/documents/:id` | JWT + `admin` | Marca el documento como eliminado (borrado lógico); el archivo físico y las filas de `document_rows` se conservan (`:id` debe ser numérico, si no responde **400**) |
 
 ## Desarrollo local sin Docker (opcional)
 

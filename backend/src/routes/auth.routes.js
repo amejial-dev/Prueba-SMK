@@ -26,7 +26,7 @@ router.post(
       .bail()
       .notEmpty()
       .withMessage('confirmarContraseña es requerida.'),
-    body('rol').optional().isIn(['user']).withMessage('rol solo puede ser "user" en el registro público.'),
+    body('rol').optional().isIn(['user', 'admin']).withMessage('rol debe ser "user" o "admin".'),
   ],
   handleValidation,
   register

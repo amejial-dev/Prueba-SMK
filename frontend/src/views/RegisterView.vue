@@ -94,9 +94,8 @@ export default {
           <label for="role">Rol</label>
           <select id="role" v-model="role" class="input-glass">
             <option value="user">Usuario</option>
-            <option value="admin" disabled>Administrador</option>
+            <option value="admin">Administrador</option>
           </select>
-          <p class="role-hint">El rol de administrador se asigna únicamente por el equipo del sistema.</p>
         </div>
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
@@ -148,12 +147,6 @@ h1 {
 label {
   font-size: 0.9rem;
   color: var(--text-color-muted);
-}
-
-.role-hint {
-  font-size: 0.8rem;
-  color: var(--text-color-muted);
-  margin: 0.25rem 0 0;
 }
 
 .success-message {
