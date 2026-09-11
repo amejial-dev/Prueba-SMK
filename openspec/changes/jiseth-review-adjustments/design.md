@@ -2,22 +2,22 @@
 
 Ver `proposal.md` para el motivo de cada uno de los 7 ajustes. Este documento fija las decisiones técnicas que dejaron ambigüedad en la petición original del cliente (Jiseth), para que `tasks.md` no deje pasos abiertos a interpretación.
 
-Restricciones relevantes ya existentes en el repo:
-- El proyecto no usa migraciones de Sequelize; el esquema se crea/actualiza con `sequelize.sync()` en `backend/src/index.js`. Cualquier cambio de columna debe funcionar con `sync()`, no con una migración nueva.
+Restricciones relevantes ya existentes en el repo (al momento de escribir este documento, antes del ajuste 8 de la revisión de Jiseth):
+- El proyecto no usaba migraciones de Sequelize; el esquema se creaba/actualizaba con `sequelize.sync()` en `backend/src/index.js`. Este punto quedó corregido por el ajuste 8 (ver Decisión 8): el proyecto ahora usa migraciones de Sequelize en un directorio propio, y `sync()` se elimina de `backend/src/index.js`.
 - `docker-compose.yml` monta el código por volumen (`./backend:/app`, `./frontend:/app`) y usa `env_file` para el servicio `backend`, pero no para `db` ni `frontend`.
 - Un change previo y ya archivado (`openspec/changes/archive/2026-09-04-restrict-admin-self-registration`) fijó la política "el registro público ignora silenciosamente cualquier `rol` recibido". La spec `frontend-auth-ui` nunca se actualizó en ese change y todavía exige "selección de rol (user o admin)" en el formulario — es una inconsistencia preexistente entre specs que este change resuelve.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Resolver los 7 puntos de revisión sin introducir herramientas o dependencias nuevas (no se agrega librería de sanitización, migraciones, etc. — se resuelve con lo que ya trae el stack: Sequelize `paranoid`, `path.basename`, `multer.MulterError`, `env_file`/interpolación de docker-compose).
+- Resolver los 7 puntos de revisión originales introduciendo la menor cantidad de herramientas o dependencias nuevas posible (no se agrega librería de sanitización, etc. — se resuelve con lo que ya trae el stack: Sequelize `paranoid`, `path.basename`, `multer.MulterError`, `env_file`/interpolación de docker-compose). La única dependencia nueva de todo el change es `sequelize-cli`, exigida explícitamente por el ajuste 8 (migraciones en directorio aparte).
 - Dejar un criterio único y no ambiguo de qué identificadores se traducen a inglés y cuáles se quedan en español, aplicable de forma mecánica archivo por archivo.
 - Que el selector de rol satisfaga la spec `frontend-auth-ui` (que ya pedía un selector) sin reabrir la vulnerabilidad de autoasignación de `admin` que el change anterior cerró.
 
 **Non-Goals:**
 - No se introduce un sistema de roles más allá de `user`/`admin` (el enum de `User.rol` no cambia).
 - No se agrega un endpoint para "restaurar" un documento eliminado lógicamente (fuera de alcance; el borrado lógico solo debe ocultar, no se pide una UI de recuperación).
-- No se migra el proyecto a usar migraciones de Sequelize; se sigue usando `sync()`.
+- No se migra el modelo de roles/permisos ni se introduce un ORM distinto de Sequelize; el ajuste 8 adopta migraciones (mecanismo nativo de Sequelize), no una herramienta externa.
 - No se traducen las claves de wire del contrato de autenticación (`nombre`, `contraseña`, `confirmarContraseña`, `rol`) ni las del CSV — ver Decisión 3.
 
 ## Decisions
@@ -27,7 +27,7 @@ Se activa `paranoid: true` en `Document.init(...)` en lugar de agregar una colum
 - Agrega automáticamente la columna `deletedAt` (mapeada como `deleted_at` si se usara `underscored`, pero este proyecto no usa `underscored`, así que la columna queda `deletedAt` igual que las de `timestamps`).
 - Hace que `destroy()` ejecute un `UPDATE ... SET "deletedAt" = NOW()` en vez de un `DELETE`.
 - Hace que `findAll()`/`findByPk()`/`findOne()` excluyan automáticamente las filas con `deletedAt` no nulo, sin tocar los `WHERE` existentes en `list()`, `download()` ni `remove()`.
-- `sequelize.sync()` agrega la columna nueva a la tabla existente sin migración manual (comportamiento estándar de `sync()` sobre una tabla ya creada: agrega columnas faltantes).
+- La columna `deletedAt` se agrega explícitamente en la migración `create-documents` (ver Decisión 8), no vía `sync()`.
 
 Alternativa descartada: columna manual `isDeleted: BOOLEAN` + filtrar a mano con `where: { isDeleted: false }` en cada consulta. Se descarta porque obliga a tocar `list()`, `download()` y cualquier consulta futura para no olvidar el filtro (riesgo de fuga de datos borrados), mientras que `paranoid` lo hace transparente y a prueba de olvidos.
 
@@ -86,9 +86,22 @@ Se agrega `env_file: - ./frontend/.env` al servicio `frontend`. Aunque Vite en m
 - Saneo del nombre de archivo en la función `filename` del `diskStorage`: `const safeOriginalName = path.basename(file.originalname).replace(/[^a-zA-Z0-9.\-_]/g, '_');` y luego `const uniqueName = \`${Date.now()}-${safeOriginalName}\`;`. `path.basename` elimina cualquier segmento de directorio (`../`, rutas absolutas); el `replace` elimina espacios, acentos y símbolos que podrían causar problemas en algunos sistemas de archivos o en cabeceras HTTP al descargar.
 - Manejo de `multer.MulterError` en `error.middleware.js`: se agrega un bloque `if (err instanceof multer.MulterError) { ... }` antes del `console.error` genérico, que mapea `err.code === 'LIMIT_FILE_SIZE'` a un 400 con mensaje indicando el límite configurado, y cualquier otro código de `MulterError` a un 400 genérico con `err.message`.
 
+### 8. Migraciones de Sequelize en directorio propio, reemplazando `sync()`
+Jiseth aclaró en una segunda ronda de feedback que el punto de la revisión original pedía exactamente lo contrario de lo que este documento fijaba al principio: el proyecto debía **adoptar** migraciones de Sequelize, en un directorio separado del de los modelos, no seguir usando `sync()`. Cambios:
+- Se agrega `sequelize-cli` (`^6.6.5`) como `devDependency` de `backend`.
+- `.sequelizerc` fija las rutas: `migrations-path` → `backend/src/database/migrations`, `seeders-path` → `backend/src/database/seeders`, `config` → `backend/src/config/database.cli.js`, `models-path` → `backend/src/models` (sin mover los modelos, que siguen siendo los que usa la app en runtime vía `Model.init`).
+- `backend/src/config/database.cli.js` es un archivo de configuración nuevo, exclusivo para `sequelize-cli` (formato plano `{ development, test, production }` que exige la CLI), que lee las mismas variables `DB_*` de `backend/.env` que ya usa `backend/src/config/database.js` (el archivo de conexión en runtime no se toca).
+- Se crean 3 migraciones en `backend/src/database/migrations/` que recrean el esquema existente exactamente como lo dejaba `sync()` antes de este ajuste: `create-users`, `create-documents` (incluye `deletedAt`, de la Decisión 1) y `create-document-rows` (en ese orden, por las FK `documents.userId → users.id` y `document_rows.documentId → documents.id`, ambas `ON DELETE CASCADE` igual que las asociaciones ya definidas en `backend/src/models/index.js`).
+- `backend/src/index.js` deja de llamar `sequelize.sync()`; solo hace `sequelize.authenticate()` antes de levantar el servidor. Aplicar el esquema pasa a ser responsabilidad explícita de `sequelize-cli db:migrate`.
+- `backend/package.json`: los scripts `start` y `dev` corren `npm run migrate` antes de levantar el servidor (`nodemon`/`node`), preservando el mismo comportamiento "levantar y ya queda listo" que daba `sync()` en `docker compose up`, pero ahora vía migraciones versionadas. Se agregan también `migrate:undo`, `migrate:undo:all` y `migration:generate` para el ciclo de vida normal de migraciones futuras.
+- No fue necesario tocar `docker-compose.yml` ni el `Dockerfile` del backend: el `CMD ["npm", "run", "dev"]` ya existente ejecuta la migración automáticamente al arrancar el contenedor gracias al cambio en el script `dev`.
+
+Alternativa descartada: mantener `sync()` para desarrollo y agregar migraciones solo como capa adicional "documental". Se descarta porque el pedido explícito era reemplazar `sync()`, y mantener ambos mecanismos activos a la vez es la causa típica de esquemas desincronizados entre entornos (uno generado por `sync()`, otro por migración) — exactamente lo que las migraciones existen para evitar.
+
 ## Risks / Trade-offs
 
 - [Cambiar las claves JSON de la API de documentos es una ruptura de contrato] → Mitigación: backend y frontend se actualizan en el mismo change/PR; no hay otros consumidores del API en esta fase de prueba técnica (confirmado por el alcance del proyecto).
 - [`paranoid: true` deja crecer la tabla `documents` indefinidamente, ya que nunca se purgan filas eliminadas] → Aceptado como trade-off: el volumen de datos de una prueba técnica es trivial; no se implementa purga automática (fuera de alcance).
 - [Dos nombres de variable para las mismas credenciales de DB (`DB_*` y `POSTGRES_*`) en `backend/.env` pueden desincronizarse si alguien edita solo uno] → Mitigación: comentario explícito en `backend/.env.example` junto a las variables `POSTGRES_*` indicando que deben coincidir con `DB_NAME/DB_USER/DB_PASSWORD`.
 - [Rechazar `rol` inválido con 400 en vez de ignorarlo es un cambio de comportamiento respecto al change anterior] → Mitigación: documentado explícitamente en el delta de `user-auth` y en el `Why`/`What Changes` de este `proposal.md`, y es un cambio de comportamiento de un endpoint interno de una prueba técnica, sin consumidores externos.
+- [Cualquier base de datos local/de un entorno ya levantada con `sync()` (antes del ajuste 8) no tiene la tabla `SequelizeMeta` que usan las migraciones, así que `sequelize-cli db:migrate` intentará crear tablas que ya existen y fallará con "relation already exists"] → Mitigación: es una transición única. Se documenta en el `README.md` y en `tasks.md` (tarea 11.5) que, tras este ajuste, cualquier entorno existente debe recrear el volumen de Postgres una sola vez (`docker compose down -v && docker compose up --build`) para partir de una base vacía que las migraciones puedan poblar desde cero; no aplica a entornos nuevos, que nunca corrieron `sync()`.

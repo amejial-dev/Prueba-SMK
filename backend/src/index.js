@@ -27,9 +27,6 @@ async function start() {
     await sequelize.authenticate();
     console.log('Conexión a la base de datos establecida.');
 
-    await sequelize.sync();
-    console.log('Modelos sincronizados.');
-
     app.listen(PORT, () => {
       console.log(`Servidor escuchando en el puerto ${PORT}`);
     });
