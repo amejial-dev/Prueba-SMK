@@ -2,6 +2,8 @@
 
 Jiseth revisó el PR anterior y encontró 7 pendientes de calidad/seguridad antes de aceptar la prueba técnica: el borrado de documentos es físico (se pierde el archivo y la fila), el registro no tiene selector de rol en el frontend (aunque `frontend-auth-ui` ya lo exige) sin abrir la puerta a autoasignación de `admin`, el código mezcla español e inglés en identificadores, `.error-message` está triplicado en el CSS, `docker-compose.yml` hardcodea credenciales de la base de datos y no propaga el `.env` del frontend, y la carga de CSV no limita tamaño ni sanea el nombre de archivo (riesgo de path traversal). Hay que resolver los 7 puntos en un solo cambio coherente porque varios se tocan entre sí (p. ej. el selector de rol toca el mismo formulario que ya está listado como reutilizable por `.error-message`, y el barrido de nomenclatura toca los mismos archivos que el soft delete).
 
+**Ajuste 8 (aclaración posterior al feedback inicial):** Jiseth señaló que `design.md` fijaba, como restricción de este change, justo lo contrario de lo pedido: el documento decía "no se migra el proyecto a usar migraciones de Sequelize; se sigue usando `sync()`", cuando el pedido real era adoptar migraciones de Sequelize en un directorio propio (separado de `backend/src/models`). Este `proposal.md` y el resto de artefactos del change se corrigen para reflejar esa intención correctamente.
+
 ## What Changes
 
 - **Soft delete de documentos**: `Document` pasa a `paranoid: true` (Sequelize). `DELETE /api/documents/:id` deja de borrar la fila y el archivo físico; solo marca `deletedAt`. El archivo en disco se conserva. El listado (`GET /api/documents`) sigue excluyendo documentos borrados automáticamente (comportamiento nativo de `paranoid`). **BREAKING** (comportamiento): un documento "eliminado" ya no libera espacio en disco ni bloquea recrear un archivo con el mismo nombre físico; esto es intencional.
@@ -11,6 +13,7 @@ Jiseth revisó el PR anterior y encontró 7 pendientes de calidad/seguridad ante
 - **Variables de entorno del servicio `db`**: `docker-compose.yml` deja de hardcodear `POSTGRES_DB/POSTGRES_USER/POSTGRES_PASSWORD`; el servicio `db` pasa a usar `env_file: ./backend/.env`, y `backend/.env(.example)` gana las claves `POSTGRES_DB/POSTGRES_USER/POSTGRES_PASSWORD` (mismo valor que `DB_NAME/DB_USER/DB_PASSWORD`, documentado que deben mantenerse en sync).
 - **`.env` del frontend en Docker**: el servicio `frontend` de `docker-compose.yml` gana `env_file: ./frontend/.env`, para que el `cp frontend/.env.example frontend/.env` documentado en el README sí tenga efecto dentro del contenedor.
 - **Límites y saneo en la carga de CSV**: `multer` en `upload.middleware.js` gana `limits.fileSize` (configurable por `MAX_CSV_FILE_SIZE_MB`, default `5`), y el nombre de archivo guardado en disco se sanea (`path.basename` + reemplazo de caracteres no seguros) antes de concatenarlo con el timestamp. `error.middleware.js` gana manejo explícito de `multer.MulterError` (incluye `LIMIT_FILE_SIZE`) para responder 400 en vez de 500.
+- **Migraciones de Sequelize en directorio propio (ajuste 8)**: se agrega `sequelize-cli` y un directorio `backend/src/database/migrations/` con una migración por tabla (`users`, `documents`, `document_rows`) que reproduce el esquema exacto que antes creaba `sequelize.sync()`. `backend/src/index.js` deja de llamar `sequelize.sync()`; el esquema se aplica con `sequelize-cli db:migrate`, que ahora corre automáticamente antes de levantar el servidor (`npm run start`/`npm run dev`). **BREAKING** (solo para entornos ya levantados antes de este ajuste): cualquier base de datos creada con `sync()` no tiene la tabla `SequelizeMeta`, así que requiere recrear el volumen de Postgres una vez (`docker compose down -v`) para que las migraciones puedan aplicarse desde cero; los entornos nuevos no se ven afectados.
 
 ## Capabilities
 
@@ -36,6 +39,9 @@ Jiseth revisó el PR anterior y encontró 7 pendientes de calidad/seguridad ante
 - `backend/src/middlewares/upload.middleware.js` — agregar `limits.fileSize`, sanear `filename`.
 - `backend/src/middlewares/error.middleware.js` — manejar `multer.MulterError`.
 - `backend/.env.example` — agregar `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `MAX_CSV_FILE_SIZE_MB`.
+- `backend/src/index.js` — quitar `sequelize.sync()`.
+- `backend/.sequelizerc` (nuevo), `backend/src/config/database.cli.js` (nuevo), `backend/src/database/migrations/*.js` (nuevos, 3 archivos) — ver Decisión 8 de `design.md`.
+- `backend/package.json` — agregar `sequelize-cli` como devDependency; scripts `migrate`, `migrate:undo`, `migrate:undo:all`, `migration:generate`; `start`/`dev` corren `migrate` antes de levantar el servidor.
 
 **Frontend (código):**
 - `frontend/src/views/RegisterView.vue` — agregar `<select>` de rol (admin disabled); quitar `.error-message` del `<style scoped>`.

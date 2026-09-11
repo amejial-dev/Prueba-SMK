@@ -16,8 +16,10 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
 .
 ├── backend/          # API REST (Express + Sequelize)
 │   └── src/
-│       ├── config/       # conexión a la base de datos
+│       ├── config/       # conexión a la base de datos (runtime + config de sequelize-cli)
 │       ├── controllers/  # lógica de negocio (auth, documents)
+│       ├── database/
+│       │   └── migrations/  # migraciones de Sequelize (sequelize-cli), separadas de los modelos
 │       ├── middlewares/  # auth (JWT), authorize (RBAC), upload (multer), error
 │       ├── models/       # User, Document, DocumentRow (Sequelize)
 │       ├── routes/       # /api/auth, /api/documents
@@ -51,6 +53,10 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
    - Backend / API: http://localhost:3000/api
    - PostgreSQL: localhost:5432
 
+   El esquema de la base de datos se crea con **migraciones de Sequelize** (`backend/src/database/migrations/`, ejecutadas con `sequelize-cli`), no con `sequelize.sync()`. El script `dev`/`start` de `backend` corre `npm run migrate` automáticamente antes de levantar el servidor, así que no hace falta ningún paso manual en un entorno nuevo.
+
+   > **Si ya tenías el proyecto levantado antes de este cambio** (esquema creado por `sync()`): la base existente no tiene la tabla `SequelizeMeta` que usan las migraciones, así que hay que recrear el volumen una sola vez con `docker compose down -v && docker compose up --build`.
+
 3. Crear el usuario administrador: el formulario de registro incluye un selector de rol (`Usuario` / `Administrador`) y el usuario creado queda con el rol elegido. También se puede crear/promover un admin por línea de comandos con el seeder:
 
    ```
@@ -73,6 +79,17 @@ Gestor de documentos CSV con autenticación JWT y roles de usuario. Cualquier us
 | `MAX_CSV_FILE_SIZE_MB` | Tamaño máximo permitido para el CSV subido | `5` |
 | `ADMIN_SEED_NOMBRE` | Nombre del usuario a crear/promover a `admin` | usado solo por `npm run seed:admin`, ver `.env.example` |
 | `ADMIN_SEED_PASSWORD` | Contraseña del usuario admin sembrado | usado solo por `npm run seed:admin`, ver `.env.example` |
+
+## Migraciones de base de datos
+
+El esquema se gestiona con migraciones de Sequelize (`sequelize-cli`), ubicadas en `backend/src/database/migrations/` (directorio separado de `backend/src/models/`, donde viven las definiciones de modelo que usa la app en runtime). Comandos disponibles en `backend` (local o vía `docker compose exec backend <comando>`):
+
+| Comando | Efecto |
+|---|---|
+| `npm run migrate` | Aplica las migraciones pendientes (se ejecuta automáticamente al arrancar con `npm start`/`npm run dev`) |
+| `npm run migrate:undo` | Revierte la última migración aplicada |
+| `npm run migrate:undo:all` | Revierte todas las migraciones |
+| `npm run migration:generate -- --name nombre-de-la-migracion` | Crea un archivo de migración nuevo en blanco |
 
 ## Roles y permisos (RBAC)
 
